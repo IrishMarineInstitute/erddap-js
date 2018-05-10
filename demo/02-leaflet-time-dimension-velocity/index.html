@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- prism for js highlights -->
+  <link rel="stylesheet" href="../prism.css">
+  <link rel="icon" href="../favicon.ico">
+  <link rel="stylesheet" href="../siimple.css">
+  <!-- see https://siimple.juanes.xyz/ -->
+  <link rel="stylesheet" href="demo.css">
+  <script src="../prism.js"></script>
+  <title>erddapjs demo 02-leaflet-time-dimension-velocity</title>
+</head>
+
+<body>
+  <div class="siimple-content">
+    <div class="siimple-navbar">
+      <div class="siimple-layout--left">
+        <a class="siimple-navbar-title">erddap-js demos</a>
+      </div>
+      <div class="siimple-layout--right">
+        <a href="../" class="siimple-navbar-link">up</a>
+        <a href="../01-leaflet-velocity/" class="siimple-navbar-link">previous</a>
+        <a href="../02-leaflet-time-dimension-velocity/" class="siimple-navbar-link" style="visibility: hidden">next</a>
+      </div>
+    </div>
+  <div class="siimple-box" align="center">
+    <div class="siimple-box-title">Erddapjs with Velocity and Time Dimension</div>
+    <!-- leaflet map... -->
+    <div id="map"></div>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+    <link rel="stylesheet" href="https://npmcdn.com/leaflet@1.1.0/dist/leaflet.css" />
+    <script src="https://npmcdn.com/leaflet@1.1.0/dist/leaflet.js"></script>
+    <!--leaflet-velocity-->
+    <!--leaflet-timedimension-->
+    <script type="text/javascript" src="leaflet.timedimension.js"></script>
+    <script type="text/javascript" src="leaflet.timedimension.util.js"></script>
+    <script type="text/javascript" src="leaflet.timedimension.layer.js"></script>
+    <script type="text/javascript" src="leaflet.timedimension.layer.wms.js"></script>
+    <script type="text/javascript" src="leaflet.timedimension.player.js"></script>
+    <script type="text/javascript" src="leaflet.timedimension.control.js"></script>
+
+
+  </div>
+  <div class="siimple-grid">
+  <div class="siimple-grid-row">
+    <div class="siimple-grid-col siimple-grid-col--2">&nbsp;</div>
+    <div class="siimple-grid-col siimple-grid-col--9">
+      <p class="siimple-p">Vectors from ERDDAP on a map with a time player using (slightly modified) <a href="https://github.com/danwild/leaflet-velocity" class="siimple-link">leaflet-velocity</a>
+        and (slightly modified) <a href="https://github.com/socib/Leaflet.TimeDimension" class="siimple-link">Leaflet.TimeDimension</a></p>
+      <pre data-src="app.js"></pre>
+    </div>
+  </div>
+  </div>
+  <div class="siimple-footer" align="center">
+    by Irish Marine Institute
+  </div>
+  </div>
+  <!-- erddap -->
+  <script src="../../dist/erddap.js"></script>
+  <!--leaflet-velocity-->
+  <link rel="stylesheet" href="leaflet-velocity.min.css" />
+  <script src="leaflet-velocity.min.js"></script>
+  <!--timedimension-velocity-layer-->
+  <link rel="stylesheet" href="leaflet.timedimension.control.css" />
+  <script type="text/javascript" src="leaflet.timedimension.layer.velocity.js"></script>
+  <!-- example app -->
+  <script src="demomap.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
