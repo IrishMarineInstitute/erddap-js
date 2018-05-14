@@ -136,10 +136,10 @@ L.TimeDimension.Layer.Velocity = L.TimeDimension.Layer.extend({
               this._update();
             }
           }
-        }.bind(this,time,bbox)).catch(function(e){
-          console.log(e);
-        }).finally(function(key){
           delete this._promises[promise_key];
+        }.bind(this,time,bbox)).catch(function(key,e){
+          delete this._promises[promise_key];
+          console.log(e);
         }.bind(this,promise_key));
 
       }

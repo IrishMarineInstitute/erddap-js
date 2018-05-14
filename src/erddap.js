@@ -2,6 +2,7 @@ const NetCDFReader = require('netcdfjs');
 const merge = require('deepmerge').default;
 const chrono = require('chrono-node');
 const moment = require("moment");
+const Papa = require('papaparse');
 const TIME_CLOSEST_PLACEHOLDER = "TIME_CLOSEST_PLACEHOLDER";
 
 if (!Date.prototype.toISOString2) {
@@ -112,10 +113,10 @@ var griddap_url = function(dataset,args,wanted,extents,extension){
 		}
 		if(arg == "bbox"){ //TODO: what if bbox is in the data.
 			var bbox = parse_bbox(args[arg]);
-			dimensions[dataset.lon_dimension].min = "("+Math.max(extents.lon.min,bbox.lon.min)+")";
-			dimensions[dataset.lon_dimension].max = "("+Math.min(extents.lon.max,bbox.lon.max)+")";
-			dimensions[dataset.lat_dimension].min = "("+Math.max(extents.lat.min,bbox.lat.min)+")";
-			dimensions[dataset.lat_dimension].max = "("+Math.min(extents.lat.max,bbox.lat.max)+")";
+			dimensions[dataset.lon_dimension].min = "("+(extents.geospatial_lon_min===undefined?bbox.lon.min:Math.max(extents.geospatial_lon_min,bbox.lon.min))+")";
+			dimensions[dataset.lon_dimension].max = "("+(extents.geospatial_lon_max===undefined?bbox.lon.max:Math.min(extents.geospatial_lon_max,bbox.lon.max))+")";
+			dimensions[dataset.lat_dimension].min = "("+(extents.geospatial_lat_min===undefined?bbox.lat.min:Math.max(extents.geospatial_lat_min,bbox.lat.min))+")";
+			dimensions[dataset.lat_dimension].max = "("+(extents.geospatial_lat_max===undefined?bbox.lat.max:Math.min(extents.geospatial_lat_max,bbox.lat.max))+")";
 			continue;
 		}
 		if(arg == "point"){ //TODO: what if bbox is in the data.
@@ -215,17 +216,96 @@ var griddap_url = function(dataset,args,wanted,extents,extension){
 	}
 		return url = dataset.base_url+"/griddap/"+dataset.id+(extension.startsWith('.')?"":".")+extension+'?'+erddap_params.join("&");
 }
+
+
+var tabledap_url = function(dataset,args,wanted,extents,extension){
+	var argstr = {
+		min: ">=",
+		max: "<=",
+		eq: "="
+	}
+	var first = false;
+	var last = false;
+
+	var erddap_params = [];
+	erddap_params.push(wanted.join(","));
+	for(var arg in args){
+		if( (arg == "since" || arg == "until") && dataset.param_encoder[arg] === time_encoder){
+			var when = arg == "since" ? ">=":"<=";
+			var component = dataset.time_dimension+when+time_encoder(args[arg]);
+			erddap_params.push(encodeURIComponent(component));
+			continue;
+		}
+		if(arg == "point"){ //TODO: what if bbox is in the data.
+			var point = parse_point(args[arg]);
+			erddap_params.push(dataset.lon_dimension+"="+point.lon);
+			erddap_params.push(dataset.lat_dimension+"="+point.lat);
+			continue;
+		}
+		if(arg == "bbox"){ //TODO: what if bbox is in the data.
+			var bbox = parse_bbox(args[arg]);
+			erddap_params.push(dataset.lon_dimension+">="+bbox.lon.min);
+			erddap_params.push(dataset.lon_dimension+"<="+bbox.lon.max);
+			erddap_params.push(dataset.lat_dimension+">="+bbox.lat.min);
+			erddap_params.push(dataset.lat_dimension+"<="+bbox.lat.max);
+			continue;
+		}
+    if(typeof args[arg] !== 'object'){
+      var component = arg+"="+dataset.param_encoder[arg](args[arg]);
+      erddap_params.push(encodeURIComponent(component));
+      continue;
+    }
+		for(var constraint in args[arg]){
+      var value = args[arg][constraint];
+      if(arg == "time"){
+        value = time_encoder(value);
+      }
+      var field = arg;
+
+			if(dataset.param_encoder[field]){
+				var component = field+argstr[constraint]+dataset.param_encoder[field](value);
+				erddap_params.push(encodeURIComponent(component));
+			}
+		}
+
+	}
+	return dataset.base_url+"/tabledap/"+dataset.id+(extension.startsWith('.')?"":".")+extension+'?'+erddap_params.join("&");
+}
+
 var Erddap = function(base_url) {
   this.base_url = base_url || 'https://upwell.pfeg.noaa.gov/erddap';
   this._datasets = {};
+}
+
+Erddap.prototype.search = function(query){
+  var search_url = this.base_url + "/search/index.csv?searchFor="+query;
+  return fetch(search_url).then(function(response){
+    if(response.ok){
+      return response.text();
+    }else{
+      throw new Error("Error fetching "+url);
+    }
+  }).then(function(csv){
+      return Papa.parse(csv,{header: true}).data;
+  }.bind(this));
 }
 
 var Dataset = function(erddap, dataset_id) {
   this.erddap = erddap;
   this.dataset_id = dataset_id;
   this._dimensions = {};
-  var url = this.erddap.base_url + "/info/" + this.dataset_id + "/index.json";
-  this._fetchMetadata = fetch(url).then(function(response) {
+  this._summary = undefined;
+  this._fetchMetadata =   this.erddap.search("datasetID=" + this.dataset_id).then(function(data){
+      for(var i=0;i<data.length;i++){
+        if(data[i]["Dataset ID"] == this.dataset_id){
+          return data[i];
+        }
+      }
+      throw new Error("Unknown dataset: ["+dataset_id+"]");
+    }.bind(this)).then(function(summary){
+      this._summary = summary;
+      var url = this.erddap.base_url + "/info/" + this.dataset_id + "/index.json";
+      return fetch(url).then(function(response) {
     if(response.ok){
       return response.json();
     }else{
@@ -328,30 +408,39 @@ var Dataset = function(erddap, dataset_id) {
     this._meta = dataset;
     return dataset;
   }.bind(this));
+  }.bind(this));
 }
 
 Dataset.prototype.fetchMetadata = function() {
   return this._fetchMetadata;
 }
+Dataset.prototype.fetchExtents = function(){
+  this._fetchExtents = this._fetchExtents || this._fetchMetadata.then(function(metadata){
+		var extents = {
+    "time_coverage_start": undefined,
+    "time_coverage_end": undefined,
+    "geospatial_lat_min": undefined,
+    "geospatial_lon_min": undefined,
+    "geospatial_lat_max": undefined,
+    "geospatial_lon_max": undefined
+    }
+		Object.keys(extents).forEach(key => {
+			if(metadata.info.attribute.NC_GLOBAL[key]){
+				extents[key] = metadata.info.attribute.NC_GLOBAL[key].value;
+			}
+		});
+    return extents;
+  }.bind(this));
+  return this._fetchExtents;
+}
 Dataset.prototype.generateUrl = function(extension){
   return new DatasetDelegate(this).generateUrl(extension);
 }
 Dataset.prototype._generateUrl = function(constraints, variables, extension) {
-  return this.fetchLocationDimensions().then(function(constraints, variables, extension,locations){
-    var extents = {
-      lat: {
-        min: locations.lats[0],
-        max: locations.lats[locations.lats.length-1]
-      },
-      lon: {
-        min: locations.lons[0],
-        max: locations.lons[locations.lons.length-1]
-      }
-    };
-    extents[ this._meta.lat_dimension ] = extents.lat;
-    extents[ this._meta.lon_dimension ] = extents.lon;
+  return this.fetchExtents().then(function(constraints, variables, extension,extents){
     // only done for griddap so far..
-    var url = griddap_url(this._meta,constraints,variables?variables:this._meta._fieldnames.slice(0), extents ,extension);
+    var urlfn = this._summary.tabledap? tabledap_url : griddap_url;
+    var url = urlfn(this._meta,constraints,variables?variables:this._meta._fieldnames.slice(0), extents ,extension);
     if(url.indexOf(TIME_CLOSEST_PLACEHOLDER)>=0){
       return this._resolve_griddap_time_closest(this._meta,url);
     }
@@ -363,16 +452,9 @@ Dataset.prototype.fetchLocationDimensions = function(useCached){
   if(useCached && this._locationDimensions){
     return this._locationDimensions;
   }
-  return this.fetchMetadata().then(function(dataset){
-    return this._fetchLocationDimensions(dataset,useCached);
-  }.bind(this));
-}
-Dataset.prototype._fetchLocationDimensions = function(dataset,useCached){
-  if(useCached && this._locationDimensions){
-    return this._locationDimensions;
-  }
-  var url = dataset.base_url+"/griddap/"+dataset.id+".nc?"+dataset.lat_dimension+","+dataset.lon_dimension;
-  this._locationDimensions = fetch(url).then(function(response) {
+  this._locationDimensions = this.fetchMetadata().then(function(dataset){
+    var url = dataset.base_url+"/griddap/"+dataset.id+".nc?"+dataset.lat_dimension+","+dataset.lon_dimension;
+    return fetch(url).then(function(response) {
     if(response.ok){
       return response.arrayBuffer();
     }else{
@@ -385,36 +467,31 @@ Dataset.prototype._fetchLocationDimensions = function(dataset,useCached){
       lons: reader.getDataVariable(reader.variables[1].name)
     }
   });
+}.bind(this));
   return this._locationDimensions;
 }
 Dataset.prototype.fetchTimeDimension = function(useCached){
   useCached = useCached === undefined? true : useCached;
   if(useCached && this._timeDimension){
-    return this._timedimension;
+    return this._timeDimension;
   }
-  return this.fetchMetadata().then(function(dataset){
-    return this._fetchTimeDimension(dataset,useCached);
+  this._timeDimension = this.fetchMetadata().then(function(dataset){
+    var time_url = dataset.base_url+"/griddap/"+dataset.id+".csv0?"+dataset.time_dimension;
+    return fetch(time_url).then(function(response) {
+      if(response.ok){
+        return response.text();
+      }else{
+        throw new Error("Error fetching "+time_url);
+      }
+    }).then(function(text) {
+      var times = text.split("\n");
+      return times.filter(function(t){return t && t.length > 0});
+    });
   }.bind(this));
-}
-Dataset.prototype._fetchTimeDimension = function(dataset,useCached){
-  if(useCached && this._timeDimension){
-    return this._timeDimension;
-  }
-  var time_url = dataset.base_url+"/griddap/"+dataset.id+".csv0?"+dataset.time_dimension;
-  return fetch(time_url).then(function(response) {
-    if(response.ok){
-      return response.text();
-    }else{
-      throw new Error("Error fetching "+time_url);
-    }
-  }).then(function(text) {
-    var times = text.split("\n");
-    this._timeDimension = times.filter(function(t){return t && t.length > 0});
-    return this._timeDimension;
-  });
+  return this._timeDimension;
 }
 Dataset.prototype._resolve_griddap_time_closest = function(dataset,url){
-  return this._fetchTimeDimension(dataset).then(function(times) {
+  return this.fetchTimeDimension(dataset,true).then(function(times) {
     var now = new Date().toISOString2();
     var closest = 0;
     times.forEach(function(time){
