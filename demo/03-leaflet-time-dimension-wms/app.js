@@ -54,7 +54,7 @@ ds.fetchTimeDimension().then(function(times){
    };
    legend.addTo(map);
 
-   var wmsLayer = L.tileLayer.wms("https://erddap.marine.ie/erddap/wms/IMI_CONN_3D/request", {
+   var wmsLayer = L.tileLayer.wms(erddap.base_url+"/wms/"+dataset_id+"/request", {
               layers: dataset_id + ':' + variable,
               format: 'image/png',
               transparent: true,
@@ -80,7 +80,6 @@ ds.fetchTimeDimension().then(function(times){
             var constraints = {};
             constraints[meta.time_dimension] = new Date(t);
             var skip = [meta.time_dimension,meta.lat_dimension,meta.lon_dimension];
-            console.log(skip);
             //TODO: allow user to select the values of these other dimensions.
             Object.keys(meta.info.dimension).forEach(function(k){
               if(skip.indexOf(k)<0){
@@ -88,7 +87,6 @@ ds.fetchTimeDimension().then(function(times){
               }
             });
             ds.constrain(constraints).variables(variable).generateUrl(".transparentPng").then(function(url){
-              console.log(url);
               img.src = url+"&.legend=Only";
             });
           });
