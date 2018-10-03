@@ -390,13 +390,14 @@ var Dataset = function(erddap, dataset_id) {
         if (dimvar != "dimension" && info.dimension && evalue) {
           dataset.dimensions[key] = evalue.split(/[ ,]+/);
         }
-
+/*
         if (info.attribute[key]) {
           if (info.attribute[key]["ioos_category"] && info.attribute[key]["ioos_category"].value == "Time") {
             dataset.time_dimension = key;
             param_encoder[key] = time_encoder;
           }
         }
+        */
 
       }
 
