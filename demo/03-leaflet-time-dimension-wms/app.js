@@ -28,6 +28,7 @@ ds.fetchTimeDimension().then(function(times){
      },
      timeDimensionControlOptions: {
         maxSpeed: 2,
+         autoPlay: true,
          playerOptions: {
              loop: true,
              transitionTime: 1000,
@@ -38,8 +39,8 @@ ds.fetchTimeDimension().then(function(times){
    var bounds = [[parseFloat(nc_global.geospatial_lat_min.value),parseFloat(nc_global.geospatial_lon_min.value)],
                    [parseFloat(nc_global.geospatial_lat_max.value),parseFloat(nc_global.geospatial_lon_max.value)]];
    var mapLatLngBounds = L.latLngBounds(bounds);
-   map.fitBounds(mapLatLngBounds);
    initDemoMap(map);
+   map.fitBounds(mapLatLngBounds);
 
    var legend = L.control({position: 'bottomright'});
 

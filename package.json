@@ -21,10 +21,11 @@
     "papaparse": "^4.4.0"
   },
   "devDependencies": {
+    "chromium": "^1.0.2",
     "gifencoder": "^1.1.0",
     "parcel-bundler": "^1.8.1",
     "png-file-stream": "^1.0.0",
-    "puppeteer": "^1.2.0",
+    "puppeteer": "^1.7.0",
     "tempdir": "^2.0.0",
     "uglify-js": "^3.3.24"
   }

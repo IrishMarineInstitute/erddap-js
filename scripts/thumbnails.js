@@ -60,18 +60,25 @@ async function generateGif(browser,options){
     ignoreHTTPSErrors: true,
     args: ['--allow-running-insecure-content', '--disable-setuid-sandbox', '--no-sandbox', ],
   });
-  await generateGif(browser,{
+  if(false) await generateGif(browser,{
     url:"http://localhost/erddapjs/demo/01-leaflet-velocity/",
     filename: "demo/01-leaflet-velocity.gif",
     clip:{x: 700, y: 300, width: 320, height: 240},
     duration: 3000
   });
-  await generateGif(browser,{
+  if(false) await generateGif(browser,{
     url:"http://localhost/erddapjs/demo/02-leaflet-time-dimension-velocity/#autoplay",
     filename: "demo/02-leaflet-time-dimension-velocity.gif",
     clip:{x: 600, y: 400, width: 320, height: 240},
     duration: 3000
   });
+  await generateGif(browser,{
+    url:"http://localhost/erddapjs/demo/03-leaflet-time-dimension-wms/#autoplay",
+    filename: "demo/03-leaflet-time-dimension-wms.gif",
+    clip:{x: 600, y: 400, width: 320, height: 240},
+    duration: 3000
+  });
+
 
   await browser.close();
 })();
