@@ -28,9 +28,9 @@ if (!Date.prototype.toISOString2) {
   }());
 }
 
-function time_encoder(value) {
+function time_encoder(value,istabledap) {
   if(value instanceof Date){
-    return "("+value.toISOString2()+")";
+    return istabledap ? value.toISOString2() : ("("+value.toISOString2()+")");
   }
   if(value == "closest"){
     return TIME_CLOSEST_PLACEHOLDER;
@@ -44,9 +44,9 @@ function time_encoder(value) {
   try {
     var m = moment(chrono.parseDate(value));
     if (m.isValid()) {
-      m = m.toISOString2();
+      m = m.toDate().toISOString2();
       if (m) {
-        return "("+m+")";
+        return istabledap? m : ("("+m+")");
       }
     }
     return value;
@@ -232,7 +232,7 @@ var tabledap_url = function(dataset,args,wanted,extents,extension){
 	for(var arg in args){
 		if( (arg == "since" || arg == "until") && dataset.param_encoder[arg] === time_encoder){
 			var when = arg == "since" ? ">=":"<=";
-			var component = dataset.time_dimension+when+time_encoder(args[arg]);
+			var component = dataset.time_dimension+when+time_encoder(args[arg],true);
 			erddap_params.push(encodeURIComponent(component));
 			continue;
 		}
@@ -258,7 +258,7 @@ var tabledap_url = function(dataset,args,wanted,extents,extension){
 		for(var constraint in args[arg]){
       var value = args[arg][constraint];
       if(arg == "time"){
-        value = time_encoder(value);
+        value = time_encoder(value,true);
       }
       var field = arg;
 
