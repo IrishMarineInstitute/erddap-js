@@ -1,9 +1,10 @@
 const NetCDFReader = require('netcdfjs');
-const merge = require('deepmerge').default;
+const merge = require('deepmerge').default || require('deepmerge');
 const chrono = require('chrono-node');
 const moment = require("moment");
 const Papa = require('papaparse');
 const TIME_CLOSEST_PLACEHOLDER = "TIME_CLOSEST_PLACEHOLDER";
+const fetch = require('node-fetch');
 
 if (!Date.prototype.toISOString2) {
   (function() {
@@ -251,7 +252,7 @@ var tabledap_url = function(dataset,args,wanted,extents,extension){
 			continue;
 		}
     if(typeof args[arg] !== 'object'){
-      var component = arg+"="+dataset.param_encoder[arg](args[arg]);
+      var component = arg+"="+dataset.param_encoder[arg](args[arg],true);
       erddap_params.push(encodeURIComponent(component));
       continue;
     }
@@ -263,7 +264,7 @@ var tabledap_url = function(dataset,args,wanted,extents,extension){
       var field = arg;
 
 			if(dataset.param_encoder[field]){
-				var component = field+argstr[constraint]+dataset.param_encoder[field](value);
+				var component = field+argstr[constraint]+dataset.param_encoder[field](value,true);
 				erddap_params.push(encodeURIComponent(component));
 			}
 		}
@@ -283,7 +284,7 @@ Erddap.prototype.search = function(query){
     if(response.ok){
       return response.text();
     }else{
-      throw new Error("Error fetching "+url);
+      throw new Error("Error fetching "+search_url);
     }
   }).then(function(csv){
       return Papa.parse(csv,{header: true}).data;

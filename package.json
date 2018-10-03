@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "dev": "parcel index.html",
     "build": "parcel build src/erddap.js --global ERDDAP --out-file erddap",
     "velocity": "node_modules/uglify-js/bin/uglifyjs --compress --mangle --output demo/02-leaflet-time-dimension-velocity/leaflet-velocity.min.js demo/02-leaflet-time-dimension-velocity/leaflet-velocity.js",
@@ -18,12 +18,15 @@
     "deepmerge": "^2.1.1",
     "moment": "^2.22.2",
     "netcdfjs": "^0.3.1",
+    "node-fetch": "^2.2.0",
     "npm": "^6.4.1",
     "papaparse": "^4.6.0"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
     "chromium": "^1.0.2",
     "gifencoder": "^1.1.0",
+    "mocha": "^5.2.0",
     "parcel-bundler": "^1.8.1",
     "png-file-stream": "^1.0.0",
     "puppeteer": "^1.7.0",
