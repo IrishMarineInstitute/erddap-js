@@ -557,6 +557,9 @@ DatasetDelegate.prototype.variables = function() {
   return this;
 }
 DatasetDelegate.prototype.fetchJSON = function(){
+  if(arguments && arguments.length){
+    this.variables.apply(this,arguments);
+  }
   var delegate = this;
   return this.generateUrl(".jsonlCSV").then(function(url){
     return fetch(url)
