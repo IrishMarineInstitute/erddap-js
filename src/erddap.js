@@ -510,7 +510,9 @@ Dataset.prototype._resolve_griddap_time_closest = function(dataset,url){
     return url.replace(re,closest);
   });
 }
-
+Dataset.prototype.fetchJSON = function(){
+  return new DatasetDelegate(this).fetchJSON();
+}
 Dataset.prototype.constrain = function(constraints) {
   return new DatasetDelegate(this).constrain(constraints);
 }
@@ -544,13 +546,40 @@ DatasetDelegate.prototype.constrain = function(constraints) {
 }
 DatasetDelegate.prototype.variables = function() {
   var variables = Array.prototype.slice.call(arguments);
-  if(variables.length == 1 && variables[0].constructor === Array){
-    variables = variables[0]
+  if(variables.length == 1){
+    if(variables[0].constructor === Array){
+      variables = variables[0];
+    }else if (typeof variables[0] === 'string' || variables[0] instanceof String){
+      variables = variables[0].split(/[ ,]+/)
+    }
   }
   this._variables = variables;
   return this;
 }
-
+DatasetDelegate.prototype.fetchJSON = function(){
+  var delegate = this;
+  return this.generateUrl(".jsonlCSV").then(function(url){
+    return fetch(url)
+    .then(function(response) {
+      return response.text();
+    })
+    .then(function(text){
+     var lines = text.split("\n");
+     var data = [];
+     var vars = delegate._variables;
+     lines.forEach(function(line){
+        if(!line.trim().length) return;
+        var a = JSON.parse(line);
+        var o = {};
+        for(var i=0;i<vars.length;i++){
+          o[vars[i]] = a[i];
+        }
+        data.push(o);
+     });
+     return data;
+   });
+ });
+}
 
 DatasetDelegate.prototype.generateUrl = function(extension){
   extension = extension || '.htmlTable';
