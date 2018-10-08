@@ -569,7 +569,7 @@ DatasetDelegate.prototype.fetchJSON = function(){
     .then(function(text){
      var lines = text.split("\n");
      var data = [];
-     var vars = delegate._variables;
+     var vars = delegate._variables || delegate._meta._fieldnames.slice(0);
      lines.forEach(function(line){
         if(!line.trim().length) return;
         var a = JSON.parse(line);
