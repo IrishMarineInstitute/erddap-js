@@ -618,8 +618,9 @@ Vectors.prototype.fetch = function(params) {
   return this.generateUrl().then(function(url) {
     var ux = this.ux;
     var uy = this.uy;
-    var nullx = this.grid._designate._meta.info.attribute[ux].missing_value.value
-    var nully = this.grid._designate._meta.info.attribute[uy].missing_value.value
+    var nullx = this.grid._designate._meta.info.attribute[ux].missing_value.value;
+    var nully = this.grid._designate._meta.info.attribute[uy].missing_value.value;
+    var meta = this.grid._designate._meta;
     return fetch(url).then(function(response) {
       if(response.ok){
         return response.arrayBuffer();
@@ -632,22 +633,21 @@ Vectors.prototype.fetch = function(params) {
       for (var i = 0; i < reader.variables.length; i++) {
         vars.push(reader.getDataVariable(reader.variables[i].name));
       }
-      for (var i = 0; i < vars[3].length; i++) {
-        if (vars[3][i] == nullx) {
-          vars[3][i] = null;
-        }
-      }
-      for (var i = 0; i < vars[4].length; i++) {
-        if (vars[4][i] == nully) {
-          vars[4][i] = null;
+      // replace null values in ux,uy last two vars data
+      for(var x=0;x<2;x++){
+        var n = vars.length - x - 1;
+        for (var i = 0; i < vars[n].length; i++) {
+          if (vars[n][i] == [nully,nullx][x]) {
+            vars[n][i] = null;
+          }
         }
       }
       return {
-        time: vars[0],
-        lat: vars[1],
-        lon: vars[2],
-        xvel: vars[3],
-        yvel: vars[4]
+        time: vars[meta.dimensions[ux].indexOf(meta.time_dimension)],
+        lat: vars[meta.dimensions[ux].indexOf(meta.lat_dimension)],
+        lon: vars[meta.dimensions[ux].indexOf(meta.lon_dimension)],
+        xvel: vars[vars.length-2],
+        yvel: vars[vars.length-1]
       };
     });
   }.bind(this));
