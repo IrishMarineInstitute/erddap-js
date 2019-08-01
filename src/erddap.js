@@ -701,8 +701,8 @@ Vectors.prototype.fetchGrib2 = function(params) {
         v.data.unshift(yvel.slice(slice, slice + alon.length));
         u.data.unshift(xvel.slice(slice, slice + alon.length));
       }
-      v.data = flatten(v.data);
-      u.data = flatten(u.data);
+      v.data = Float32Array.from(flatten(v.data));
+      u.data = Float32Array.from(flatten(u.data));
       results.push(u);
       results.push(v);
     }
