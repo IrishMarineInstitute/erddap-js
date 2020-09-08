@@ -5,9 +5,9 @@ var ds = erddap.dataset('IMI_NEATL');
 ds.fetchTimeDimension().then(function(times){
   times = times.map(function(d){return new Date(d)});
   map = L.map('map', {
-   zoom: 9,
+   zoom: 10,
    //crs: L.CRS.EPSG4326,
-   center: [53.3, -10],
+   center: [51.637, -10.124],
    fullscreenControl: true,
    timeDimensionControl: true,
    timeDimension: true,
