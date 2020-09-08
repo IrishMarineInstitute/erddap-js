@@ -1,7 +1,7 @@
 
 var map;
 var erddap = new ERDDAP('https://erddap.marine.ie/erddap');
-var ds = erddap.dataset('IMI_CONN_2D');
+var ds = erddap.dataset('IMI_NEATL');
 ds.fetchTimeDimension().then(function(times){
   times = times.map(function(d){return new Date(d)});
   map = L.map('map', {
@@ -28,7 +28,7 @@ ds.fetchTimeDimension().then(function(times){
     maxBuffer: 24*4,
     fetchGrib2: function(time,bounds){
       return ds.constrain({time: time, bbox: bounds.toBBoxString()}).vectors(
-        'barotropic_sea_water_x_velocity','barotropic_sea_water_y_velocity')
+        'sea_surface_x_velocity','sea_surface_y_velocity')
             .fetchGrib2();
     }
   });
